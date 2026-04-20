@@ -1,0 +1,130 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Layout from '../components/Layout';
+import { useLanguage } from '../contexts/LanguageContext';
+
+type CallState = 'idle' | 'dialing' | 'connected';
+
+const ContactEmployee: React.FC = () => {
+    const navigate = useNavigate();
+    const { language } = useLanguage();
+    const [callState, setCallState] = useState<CallState>('idle');
+    const [callDuration, setCallDuration] = useState(0);
+
+    const initiateCall = async () => {
+        setCallState('dialing');
+        try {
+            // TODO: แทนที่ URL นี้ด้วย URL หรือ IP ของ GSM Module
+            fetch('http://192.168.1.xxx/send-sms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: "ลูกค้าที่ตู้ Kiosk ต้องการความช่วยเหลือ" })
+            }).catch(err => console.error("GSM API error:", err)); // Non-blocking
+        } catch (error) {
+            console.error("GSM API fetch setup error:", error);
+        }
+
+        // Simulate dialing for 4 seconds, then connect
+        setTimeout(() => {
+            setCallState(currentState => {
+                if (currentState === 'dialing') return 'connected';
+                return currentState;
+            });
+        }, 4000);
+    };
+
+    // Timer for connected state
+    useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (callState === 'connected') {
+            interval = setInterval(() => {
+                setCallDuration(prev => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [callState]);
+
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
+    const handleEndCall = () => {
+        navigate(-1);
+    };
+
+    return (
+        <Layout showBackButton={false} showHomeButton={false} showGlobalLogo={false}>
+            <div className="absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-between p-10 pt-32 pb-24 text-white">
+
+                {/* Top Section: Avatar & Status */}
+                <div className="flex flex-col items-center animate-fade-in-down w-full mt-24">
+                    <h1 className="text-6xl font-light text-gray-200 mb-12">
+                        {language === 'TH' ? 'พนักงานต้อนรับ' : 'Receptionist'}
+                    </h1>
+
+                    {/* Avatar with pulsing effect when dialing */}
+                    <div className="relative flex items-center justify-center mb-16 h-64 w-64">
+                        {callState === 'dialing' && (
+                            <>
+                                <div className="absolute w-64 h-64 bg-slate-700 rounded-full animate-ping opacity-20"></div>
+                                <div className="absolute w-80 h-80 bg-slate-700 rounded-full animate-ping opacity-10" style={{ animationDelay: '0.2s' }}></div>
+                            </>
+                        )}
+                        <div className="absolute w-56 h-56 bg-slate-700 rounded-full flex items-center justify-center z-10 shadow-2xl border-4 border-slate-600">
+                            <svg className="w-28 h-28 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="text-4xl text-gray-400 font-light h-12">
+                        {callState === 'idle' && (language === 'TH' ? 'พร้อมติดต่อพนักงาน' : 'Ready to call')}
+                        {callState === 'dialing' && (language === 'TH' ? 'กำลังค้นหาสัญญาณ...' : 'Dialing...')}
+                        {callState === 'connected' && formatTime(callDuration)}
+                    </div>
+                </div>
+
+                {/* Bottom Section: Controls */}
+                <div className="flex flex-row items-center justify-center w-full gap-24 mb-32 animate-fade-in-up">
+
+                    {callState === 'idle' ? (
+                        <>
+                            {/* Cancel Button */}
+                            <button
+                                onClick={handleEndCall}
+                                className="w-32 h-32 bg-slate-600 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-500 active:scale-95 transition-all text-white"
+                            >
+                                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+
+                            {/* Start Call Button */}
+                            <button
+                                onClick={initiateCall}
+                                className="w-40 h-40 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-400 active:scale-95 transition-all outline-none"
+                            >
+                                <svg className="w-20 h-20 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                                </svg>
+                            </button>
+                        </>
+                    ) : (
+                        /* End Call Button */
+                        <button
+                            onClick={handleEndCall}
+                            className="w-40 h-40 bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-400 active:scale-95 transition-all"
+                        >
+                            <svg className="w-20 h-20 text-white transform rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                            </svg>
+                        </button>
+                    )}
+
+                </div>
+            </div>
+        </Layout>
+    );
+};
+
+export default ContactEmployee;

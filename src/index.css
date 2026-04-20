@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 p-0 overflow-hidden bg-black;
+    /* Prevent text selection and highlight colors */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent saving/dragging images */
+  img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+  }
+
+  /* Allow text selection only inside input fields */
+  input,
+  textarea {
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Leaflet Font Size Overrides */
+.leaflet-popup-content {
+  font-size: 1.2rem !important;
+  line-height: 1.6 !important;
+  min-width: 200px;
+}
+
+.leaflet-popup-content b {
+  font-size: 1.4rem !important;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.leaflet-container {
+  font-family: 'Kanit', sans-serif !important;
+}
